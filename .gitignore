@@ -150,3 +150,5 @@ media/
 
 sent_emails/
 
+# Скрипты для личного пользования
+start_dev_project.sh

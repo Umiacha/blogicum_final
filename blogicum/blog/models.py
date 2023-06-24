@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth import get_user_model
+# Попробовать вынести фильтры через models.Manager
 
 
 User = get_user_model()
@@ -76,8 +77,11 @@ class Post(AbstractModel):
         help_text=(
             'Если установить дату и время в будущем '
             '— можно делать отложенные публикации.'
-        )
+        ),
+        blank=True,  # Обрати внимание, что это поле должно быть заполнено
+        null=True
     )
+    image = models.ImageField('Фото', upload_to='post_images', blank=True)
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -101,5 +105,31 @@ class Post(AbstractModel):
     )
 
     class Meta:
-        verbose_name = 'публикация'
+        verbose_name = 'Публикация'
         verbose_name_plural = 'Публикации'
+        ordering = ('pub_date',)
+    
+    
+    def comment_count(self):
+        return self.commentpost.count()
+
+
+class Comment(models.Model):
+    text = models.TextField('Текст')
+    created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name='Автор',
+        related_name='commentauthor'
+    )
+    post = models.ForeignKey(
+        Post,
+        on_delete=models.CASCADE,
+        related_name='commentpost',
+        verbose_name='Пост',
+    )
+    
+    
+    class Meta:
+        ordering = ('created_at',)
