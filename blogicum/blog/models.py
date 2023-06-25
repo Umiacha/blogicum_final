@@ -75,11 +75,10 @@ class Post(AbstractModel):
     pub_date = models.DateTimeField(
         verbose_name='Дата и время публикации',
         help_text=(
+            'Формат: ГГГГ-ММ-ДД ЧЧ:ММ:СС. '
             'Если установить дату и время в будущем '
             '— можно делать отложенные публикации.'
         ),
-        blank=True,  # Обрати внимание, что это поле должно быть заполнено
-        null=True
     )
     image = models.ImageField('Фото', upload_to='post_images', blank=True)
     author = models.ForeignKey(
@@ -108,8 +107,7 @@ class Post(AbstractModel):
         verbose_name = 'Публикация'
         verbose_name_plural = 'Публикации'
         ordering = ('pub_date',)
-    
-    
+
     def comment_count(self):
         return self.commentpost.count()
 
@@ -129,7 +127,6 @@ class Comment(models.Model):
         related_name='commentpost',
         verbose_name='Пост',
     )
-    
-    
+
     class Meta:
         ordering = ('created_at',)

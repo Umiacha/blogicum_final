@@ -6,18 +6,8 @@ from django.views.generic.edit import CreateView
 from .forms import CustomUserCreationForm
 
 
-# def about(request):
-#     template = 'pages/about.html'
-#     return render(request, template)
-
-
 class About(TemplateView):
     template_name = 'pages/about.html'
-
-
-# def rules(request):
-#     template = 'pages/rules.html'
-#     return render(request, template)
 
 
 class Rules(TemplateView):
@@ -27,12 +17,14 @@ class Rules(TemplateView):
 def page_not_found(request, exception):
     return render(request, 'pages/404.html', status=404)
 
+
 def not_corresponding(request):
     return render(request, 'pages/500.html', status=500)
 
+
 def csrf_failure(
     request, reason='csrf error', template_name='pages/403csrf.html'
-    ):
+):
     return render(request, )
 
 
