@@ -3,14 +3,18 @@ from django.contrib import admin
 from django.conf.urls.static import static
 from django.urls import path, include
 
-from pages.views import UserCreateView
+from users.views import AuthUserCreateView
 
 urlpatterns = [
     path('', include('blog.urls', namespace='blog')),
+    path('', include('users.urls', namespace='users')),
     path('pages/', include('pages.urls', namespace='pages')),
     path('admin/', admin.site.urls),
-    path('auth/registration/', UserCreateView.as_view(), name='registration'),
     path('auth/', include('django.contrib.auth.urls')),
+    path('auth/registration/',
+        AuthUserCreateView.as_view(),
+        name='registration'
+    ),
 ]
 if settings.DEBUG:
     import debug_toolbar

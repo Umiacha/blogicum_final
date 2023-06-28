@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
@@ -11,10 +9,9 @@ from django.views.generic import (
 from django.views.generic.list import BaseListView
 from django.core.exceptions import PermissionDenied
 
+from blogicum.settings import NUMBER_OF_POSTS_ON_MAINPAGE
 from .models import Post, Category, Comment
-from .forms import PostForm, CommentForm, UserForm
-
-NUMBER_OF_POSTS_ON_MAINPAGE = 10
+from .forms import PostForm, CommentForm
 
 User = get_user_model()
 
@@ -58,60 +55,7 @@ class CategoryDetailView(DetailView, BaseListView):
         return context
 
 
-class UserDetailView(DetailView, BaseListView):
-    model = User
-    template_name = 'blog/profile.html'
-    slug_field = 'username'
-    slug_url_kwarg = 'username'
-    paginate_by = NUMBER_OF_POSTS_ON_MAINPAGE
-    profile = None
-    object_list = None
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object_list = Post.objects.filter(
-            author=User.objects.get(
-                username=kwargs['username']
-            )
-        ).order_by('-pub_date',)
-        self.profile = get_object_or_404(User, username=kwargs['username'])
-        return super().dispatch(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
-        context = super().get_context_data(
-            object_list=self.object_list, **kwargs
-        )
-        context['user'] = self.request.user
-        context['profile'] = self.profile
-        return context
-
-
-class UserUpdateView(LoginRequiredMixin, UpdateView):
-    model = User
-    template_name = 'blog/user.html'
-    form_class = UserForm
-    object = None
-
-    def get_object(self, queryset=None):
-        return None
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        if self.request.method.lower() == 'get':
-            context['form'] = self.form_class(instance=self.request.user)
-        return context
-
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST, instance=self.request.user)
-        if form.is_valid():
-            return super().form_valid(form)
-        else:
-            return super().form_invalid(form)
-
-    def get_success_url(self):
-        return reverse_lazy(
-            'blog:profile',
-            kwargs={'username': self.request.user.username}
-        )
 
 
 class PostCreateView(LoginRequiredMixin, CreateView):
@@ -126,7 +70,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def get_success_url(self) -> str:
         return reverse_lazy(
-            'blog:profile',
+            'users:profile',
             kwargs={'username': self.request.user.username}
         )
 
@@ -194,7 +138,7 @@ class PostDeleteView(LoginRequiredMixin, DeleteView):
 
     def get_success_url(self):
         return reverse_lazy(
-            'blog:profile',
+            'users:profile',
             kwargs={'username': self.request.user.username}
         )
 

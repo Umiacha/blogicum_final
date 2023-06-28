@@ -28,16 +28,6 @@ urlpatterns = [
         name='category_posts'
     ),
     path(
-        'profile/edit/',
-        views.UserUpdateView.as_view(),
-        name='edit_profile'
-    ),
-    path(
-        'profile/<slug:username>/',
-        views.UserDetailView.as_view(),
-        name='profile'
-    ),
-    path(
         'posts/<int:post_id>/comment/',
         views.CommentCreateView.as_view(),
         name='add_comment'

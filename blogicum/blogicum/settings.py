@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'blog.apps.BlogConfig',
     'pages.apps.PagesConfig',
+    'users.apps.UsersConfig',
 ]
 
 MIDDLEWARE = [
@@ -114,3 +115,5 @@ LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'blog:index'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+NUMBER_OF_POSTS_ON_MAINPAGE = 10
