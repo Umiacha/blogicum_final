@@ -5,7 +5,8 @@ from django import forms
 User = get_user_model()
 
 
-# Как по мне, UserCreationForm уже отражает смысл модели, но я от модели с таким именем наследуюсь.
+# Как по мне, UserCreationForm уже отражает смысл модели,
+# но я от модели с таким именем наследуюсь.
 # Поэтому додумался только такого
 class AuthUserCreationForm(UserCreationForm):
 
@@ -14,7 +15,7 @@ class AuthUserCreationForm(UserCreationForm):
 
 
 class AuthUserUpdateForm(forms.ModelForm):
-    
+
     class Meta:
         model = User
         fields = ('username', 'first_name', 'last_name', 'email')

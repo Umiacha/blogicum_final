@@ -1,5 +1,4 @@
 from django.views.generic.edit import CreateView
-from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -20,29 +19,23 @@ class AuthUserCreateView(CreateView):
 
 
 class UserDetailView(DetailView, BaseListView):
-    model = User
     template_name = 'users/profile.html'
     slug_field = 'username'
     slug_url_kwarg = 'username'
     paginate_by = NUMBER_OF_POSTS_ON_MAINPAGE
-    profile = None
-    object_list = None
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object_list = Post.objects.filter(
-            author=User.objects.get(
-                username=kwargs['username']
-            )
-        ).order_by('-pub_date',)
-        self.profile = get_object_or_404(User, username=kwargs['username'])
-        return super().dispatch(request, *args, **kwargs)
+    def get_queryset(self):
+        return User.objects.all()
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(
-            object_list=self.object_list, **kwargs
+        self.object_list = Post.objects.filter(
+            author=User.objects.get(
+                username=self.kwargs['username']
+            )
         )
+        context = super().get_context_data(**kwargs)
         context['user'] = self.request.user
-        context['profile'] = self.profile
+        context['profile'] = self.get_object(self.get_queryset())
         return context
 
 
@@ -52,8 +45,9 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
     form_class = AuthUserUpdateForm
     object = None
 
-    def get_object(self, queryset=None):
-        return None
+    def dispatch(self, request, *args, **kwargs):
+        self.kwargs[self.pk_url_kwarg] = self.request.user.id
+        return super().dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -63,14 +57,11 @@ class UserUpdateView(LoginRequiredMixin, UpdateView):
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST, instance=self.request.user)
-        # instance = form.save(commit=False)
         if form.is_valid():
             return super().form_valid(form)
-        else:
-            return super().form_invalid(form)
 
     def get_success_url(self):
         return reverse_lazy(
             'users:profile',
-            kwargs={'username': self.request.user.username}
+            kwargs={'username': self.object.username}
         )

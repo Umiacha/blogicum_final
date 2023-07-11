@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth import get_user_model
-# Попробовать вынести фильтры через models.Manager
 
 
 User = get_user_model()
@@ -64,6 +63,14 @@ class Location(AbstractModel):
         return self.name
 
 
+# Выбрал новые названия по логике:
+# "А как бы называлось подобное поле в связанной модели?.."
+
+# Нашел best practise на stackoverflow,
+# но решил его пока что не использовать:
+# 'readable_%(app_label)s_%(class)s_set+'
+
+
 class Post(AbstractModel):
     title = models.CharField(
         max_length=256,
@@ -85,7 +92,7 @@ class Post(AbstractModel):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации',
-        related_name='post_author'
+        related_name='posts'
     )
     location = models.ForeignKey(
         Location,
@@ -93,23 +100,23 @@ class Post(AbstractModel):
         null=True,
         blank=True,
         verbose_name='Местоположение',
-        related_name='post_location'
+        related_name='events'
     )
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Категория',
-        related_name='post_category'
+        related_name='content'
     )
 
     class Meta:
         verbose_name = 'Публикация'
         verbose_name_plural = 'Публикации'
-        ordering = ('pub_date',)
+        ordering = ('-pub_date',)
 
     def comment_count(self):
-        return self.commentpost.count()
+        return self.feedback.count()
 
 
 class Comment(models.Model):
@@ -119,12 +126,12 @@ class Comment(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор',
-        related_name='commentauthor'
+        related_name='comments'
     )
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='commentpost',
+        related_name='feedback',
         verbose_name='Пост',
     )
 
