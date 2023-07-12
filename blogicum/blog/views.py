@@ -93,7 +93,11 @@ class PostDetailView(DetailView):
     extra_context = {'form': CommentForm()}
 
     def get_queryset(self):
-        if self.request.user != self.model.objects.get(pk=self.kwargs['post_id']).author:
+        instance = get_object_or_404(
+            self.model,
+            pk=self.kwargs['post_id']
+        )
+        if self.request.user != instance.author:
             queryset = self.model.objects.select_related(
                 'author', 'category', 'location'
             ).filter(
@@ -104,15 +108,17 @@ class PostDetailView(DetailView):
         else:
             queryset = self.model.objects.select_related(
                 'author', 'category', 'location'
-            ).filter(
-                pub_date__lte=Now(),
-                category__is_published=True
             )
         return queryset
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['comments'] = self.object.feedback.select_related('author')
+        context = {}
+        context['post'] = get_object_or_404(
+            self.get_queryset(),
+            pk=self.kwargs['post_id']
+        )
+        context['comments'] = context['post'].feedback.select_related('author')
+        context.update(**self.extra_context)
         return context
 
 
