@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.functions import Now
@@ -7,9 +8,8 @@ from django.views.generic import (
     DetailView, TemplateView, CreateView, UpdateView,
 )
 from django.views.generic.list import BaseListView
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 
-from blogicum.settings import NUMBER_OF_POSTS_ON_MAINPAGE
 from .models import Post, Category, Comment
 from .forms import PostForm, CommentForm
 
@@ -18,7 +18,7 @@ User = get_user_model()
 
 class Homepage(BaseListView, TemplateView):
     template_name = 'blog/index.html'
-    paginate_by = NUMBER_OF_POSTS_ON_MAINPAGE
+    paginate_by = settings.NUMBER_OF_POSTS_ON_MAINPAGE
     ordering = '-pub_date'
     queryset = Post.objects.filter(
         pub_date__lte=Now(),
@@ -29,25 +29,31 @@ class Homepage(BaseListView, TemplateView):
 
 class CategoryDetailView(DetailView, BaseListView):
     template_name = 'blog/category.html'
-    paginate_by = NUMBER_OF_POSTS_ON_MAINPAGE
+    paginate_by = settings.NUMBER_OF_POSTS_ON_MAINPAGE
     slug_url_kwarg = 'category_slug'
 
     def get_queryset(self):
-        return Category.objects.filter(
-            is_published=True,
-        )
-
-    def get_context_data(self, **kwargs):
-        self.object_list = Post.objects.select_related(
+        return Category.objects.get(
+            slug=self.kwargs['category_slug']
+        ).posts.select_related(
             'author', 'category', 'location'
         ).filter(
             pub_date__lte=Now(),
             is_published=True,
             category__is_published=True,
-            category__slug=self.kwargs['category_slug']
         )
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(
+            Category,
+            slug=self.kwargs['category_slug'],
+            is_published=True
+        )
+
+    def get_context_data(self, **kwargs):
+        self.object_list = self.get_queryset()
         context = super().get_context_data(**kwargs)
-        context['category'] = self.get_object(self.get_queryset())
+        context['category'] = self.get_object()
         return context
 
 
@@ -73,11 +79,25 @@ class PostUpdateView(LoginRequiredMixin, UpdateView):
     template_name = 'blog/create.html'
     pk_url_kwarg = 'post_id'
 
-    def dispatch(self, request, *args, **kwargs):
-        self.instance = get_object_or_404(Post, pk=kwargs['post_id'])
-        if self.instance.author != request.user:
+    def post(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except ObjectDoesNotExist:
             return redirect('blog:post_detail', post_id=kwargs['post_id'])
-        return super().dispatch(request, *args, **kwargs)
+        return super().post(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+        except ObjectDoesNotExist:
+            return redirect('blog:post_detail', post_id=kwargs['post_id'])
+        return self.render_to_response(self.get_context_data())
+
+    def get_object(self, queryset=None):
+        instance = get_object_or_404(Post, pk=self.kwargs['post_id'])
+        if instance.author != self.request.user:
+            raise ObjectDoesNotExist
+        return instance
 
     def get_success_url(self):
         return reverse_lazy(
@@ -92,32 +112,28 @@ class PostDetailView(DetailView):
     pk_url_kwarg = 'post_id'
     extra_context = {'form': CommentForm()}
 
-    def get_queryset(self):
+    def get_object(self, queryset=None):
         instance = get_object_or_404(
             self.model,
             pk=self.kwargs['post_id']
         )
+        queryset = self.model.objects.select_related(
+            'author', 'category', 'location'
+        )
         if self.request.user != instance.author:
-            queryset = self.model.objects.select_related(
-                'author', 'category', 'location'
-            ).filter(
+            queryset = queryset.filter(
                 pub_date__lte=Now(),
                 is_published=True,
                 category__is_published=True
             )
-        else:
-            queryset = self.model.objects.select_related(
-                'author', 'category', 'location'
-            )
-        return queryset
-
-    def get_context_data(self, **kwargs):
-        context = {}
-        context['post'] = get_object_or_404(
-            self.get_queryset(),
+        return get_object_or_404(
+            queryset,
             pk=self.kwargs['post_id']
         )
-        context['comments'] = context['post'].feedback.select_related('author')
+
+    def get_context_data(self, **kwargs):
+        context = {'post': self.get_object()}
+        context['comments'] = context['post'].posts.select_related('author')
         context.update(**self.extra_context)
         return context
 

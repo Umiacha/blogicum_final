@@ -63,14 +63,6 @@ class Location(AbstractModel):
         return self.name
 
 
-# Выбрал новые названия по логике:
-# "А как бы называлось подобное поле в связанной модели?.."
-
-# Нашел best practise на stackoverflow,
-# но решил его пока что не использовать:
-# 'readable_%(app_label)s_%(class)s_set+'
-
-
 class Post(AbstractModel):
     title = models.CharField(
         max_length=256,
@@ -92,7 +84,7 @@ class Post(AbstractModel):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации',
-        related_name='posts'
+        related_name='publications'
     )
     location = models.ForeignKey(
         Location,
@@ -107,7 +99,7 @@ class Post(AbstractModel):
         on_delete=models.SET_NULL,
         null=True,
         verbose_name='Категория',
-        related_name='content'
+        related_name='posts'
     )
 
     class Meta:
@@ -116,7 +108,7 @@ class Post(AbstractModel):
         ordering = ('-pub_date',)
 
     def comment_count(self):
-        return self.feedback.count()
+        return self.posts.count()
 
 
 class Comment(models.Model):
@@ -131,7 +123,7 @@ class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='feedback',
+        related_name='posts',
         verbose_name='Пост',
     )
 
