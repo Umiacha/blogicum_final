@@ -4,6 +4,18 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+# Я еще раз почитал информацию
+# в Интернете (и на официальном сайте Django):
+# related_name для полей одной модели могут совпадать, если они
+# указывают на связь с разными моделями.
+# Другими словами, related_name обязаны быть разными
+# для связей с одной моделью
+# (особый случай, если related_name для поля указывается
+# в абстрактном классе, ведь
+# тогда в дочерних это имя будет тем же
+# и возникнет коллизия: в таких случаях
+# рекомендуется использовать синтаксис '%(app_label)s_%(class)s')
+
 
 class AbstractModel(models.Model):
     """
@@ -84,7 +96,7 @@ class Post(AbstractModel):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор публикации',
-        related_name='publications'
+        related_name='posts'
     )
     location = models.ForeignKey(
         Location,
@@ -92,7 +104,7 @@ class Post(AbstractModel):
         null=True,
         blank=True,
         verbose_name='Местоположение',
-        related_name='events'
+        related_name='posts'
     )
     category = models.ForeignKey(
         Category,
@@ -108,7 +120,7 @@ class Post(AbstractModel):
         ordering = ('-pub_date',)
 
     def comment_count(self):
-        return self.posts.count()
+        return self.comments.count()
 
 
 class Comment(models.Model):
@@ -123,7 +135,7 @@ class Comment(models.Model):
     post = models.ForeignKey(
         Post,
         on_delete=models.CASCADE,
-        related_name='posts',
+        related_name='comments',
         verbose_name='Пост',
     )
 

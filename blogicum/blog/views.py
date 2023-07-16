@@ -133,7 +133,7 @@ class PostDetailView(DetailView):
 
     def get_context_data(self, **kwargs):
         context = {'post': self.get_object()}
-        context['comments'] = context['post'].posts.select_related('author')
+        context['comments'] = context['post'].comments.select_related('author')
         context.update(**self.extra_context)
         return context
 
