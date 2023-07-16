@@ -33,9 +33,7 @@ class CategoryDetailView(DetailView, BaseListView):
     slug_url_kwarg = 'category_slug'
 
     def get_queryset(self):
-        return Category.objects.get(
-            slug=self.kwargs['category_slug']
-        ).posts.select_related(
+        return self.object.posts.select_related(
             'author', 'category', 'location'
         ).filter(
             pub_date__lte=Now(),
